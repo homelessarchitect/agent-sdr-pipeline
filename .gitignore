@@ -1,0 +1,22 @@
+# env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials*.json
+
+# deps & builds
+node_modules/
+dist/
+__pycache__/
+.venv/
+
+# os & editors
+.DS_Store
+.idea/
+.vscode/
+
+# local data
+*.local.json
+tmp/
+leads*.csv
