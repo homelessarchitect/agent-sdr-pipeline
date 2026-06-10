@@ -1,0 +1,303 @@
+{
+  "id": "5ad0da90-0706-4b55-bf9e-705ec80861f7",
+  "name": "SDR Pipeline Main",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sdr-lead",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Normalize Lead",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-name",
+              "name": "name",
+              "value": "={{ $json.body.name?.trim() || $json.name?.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-email",
+              "name": "email",
+              "value": "={{ ($json.body.email || $json.email || '').trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-company",
+              "name": "company",
+              "value": "={{ $json.body.company?.trim() || $json.company?.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-received-at",
+              "name": "received_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Dedup Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "jsCode": "// TODO: Replace with HubSpot API call once Phase 1 credentials are set.\n// Phase 1 HUMAN task (1.3, 1.8) must be completed first.\n// Current behavior: pass-through with dedup_checked: false marker.\n// Production behavior: GET https://api.hubapi.com/contacts/v1/contact/email/{email}/profile\n// If contact exists and outreach_status = 'sent', return [] to halt branch.\n\nconst lead = items[0].json;\nconst email = lead.email;\n\n// Basic field validation\nif (!email || !lead.name || !lead.company) {\n  throw new Error('Missing required field: name, email, and company are all required');\n}\n\n// Basic email format validation (RFC 5322 minimal)\nconst emailPattern = /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/;\nif (!emailPattern.test(email)) {\n  throw new Error(`Invalid email format: ${email}`);\n}\n\n// STUB: dedup not implemented — HubSpot credential required (task 1.3, 1.8)\nreturn [{\n  json: {\n    ...lead,\n    dedup_checked: false,\n    dedup_note: 'TODO: wire HubSpot GET /contacts/v1/contact/email/{email}/profile after Phase 1'\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "Generate Outreach",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [900, 300],
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un SDR senior especializado en ventas B2B SaaS para el mercado LATAM. Tu misión es escribir emails de outreach en frío que abran conversaciones reales con founders y líderes de agencias digitales, startups de 5 a 50 empleados que venden a otras pymes.\n\nTu tono es directo y cercano — como un par reflexivo que llegó a una idea, no un vendedor que lanzó un pitch. Usás voseo natural. Nunca abrís con \"Espero que este email te encuentre bien\" ni frases corporativas vacías.\n\nFramework de escritura (en orden estricto):\n1. Observación — algo específico de su empresa o rol. Si no existe enriquecimiento, usá el nombre de la empresa como ancla.\n2. Problema — una fricción concreta que ese perfil enfrenta (pipeline impredecible, seguimiento manual, leads sin contexto).\n3. Prueba — un resultado concreto de lo que podés hacer, no una lista de features.\n4. Ask — un pedido de bajo compromiso: 15 minutos, una llamada rápida.\n\nReglas duras:\n- subject: máximo 9 palabras, minúsculas, aspecto interno (como si fuera un mensaje entre colegas).\n- body: máximo 120 palabras en español.\n- Exactamente 1 CTA: el link de Calendly provisto. Nada más, nada menos.\n- \"you/your\" dominante en inglés → en español: vos/tu empresa de forma natural.\n- Si no hay datos de enriquecimiento, usá solo nombre y empresa — no inventes datos.\n- El cuerpo debe referenciar algo específico de la persona o empresa (nombre, dominio, rol, o industria). Si nada de eso existe, el nombre de la empresa es suficiente como ancla.\n\nSalida esperada — JSON con exactamente estas dos claves, sin texto extra:\n{\"subject\": \"...\", \"body\": \"...\"}"
+            },
+            {
+              "role": "user",
+              "content": "=Datos del prospecto:\n- Nombre: {{ $json.name }}\n- Empresa: {{ $json.company }}\n- Cargo: {{ $json.position || '' }}\n- Dominio: {{ $json.domain || '' }}\n- Link de reserva: {{ $env.CALENDLY_LINK || 'https://calendly.com/tu-link' }}\n\nInstrucciones adicionales:\n- Si \"cargo\" está vacío, inferí el perfil típico de un founder/líder de una empresa B2B SaaS del tamaño de {{ $json.company }}.\n- Si \"dominio\" está vacío, referenciá la empresa directamente por nombre.\n- El link de reserva DEBE aparecer una sola vez en el body, como CTA final.\n- No uses el dominio como link clickeable — solo como referencia de contexto si es útil.\n- Responde únicamente con el JSON. Sin explicaciones, sin markdown extra."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "gATfbonACOwDD8br",
+          "name": "OpenAI Lumina"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "Parse Outreach JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "parameters": {
+        "jsCode": "// Parse the LLM JSON output and merge with lead context.\n// $('Generate Outreach').first().json contains the OpenAI response.\n// $('Dedup Check').first().json contains the normalized lead.\n\nconst llmOutput = $('Generate Outreach').first().json;\nconst lead = $('Dedup Check').first().json;\n\n// OpenAI node output shape: { message: { content: '...' } }\nconst rawContent = llmOutput?.message?.content || llmOutput?.text || '';\n\nif (!rawContent) {\n  throw new Error('LLM returned empty content — cannot parse outreach');\n}\n\n// Strip markdown code fences if present (```json ... ```)\nconst cleaned = rawContent.replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Failed to parse LLM JSON: ${e.message} — raw: ${rawContent.substring(0, 200)}`);\n}\n\nif (!parsed.subject || !parsed.body) {\n  throw new Error(`LLM output missing required keys. Got: ${Object.keys(parsed).join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...lead,\n    subject: parsed.subject,\n    body: parsed.body,\n    outreach_generated: true\n  }\n}];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "Fallback Outreach",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 500],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb-subject",
+              "name": "subject",
+              "value": "={{ 'una idea para ' + ($('Dedup Check').first().json.company || 'tu empresa') }}",
+              "type": "string"
+            },
+            {
+              "id": "fb-body",
+              "name": "body",
+              "value": "=Hola {{ $('Dedup Check').first().json.name }},\n\nVi que {{ $('Dedup Check').first().json.company }} está en una etapa donde el pipeline de ventas puede volverse un cuello de botella real.\n\nAyudo a equipos como el tuyo a automatizar el proceso completo — desde el primer contacto hasta el CRM — sin sumar más gente al equipo.\n\n¿Tenés 15 minutos esta semana? {{ $env.CALENDLY_LINK || 'https://calendly.com/tu-link' }}",
+              "type": "string"
+            },
+            {
+              "id": "fb-flag",
+              "name": "outreach_generated",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "fb-error",
+              "name": "outreach_error",
+              "value": "LLM parse failed — using static fallback",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "Wait for Approval",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "webhookSuffix": "",
+          "maxWaitTime": 3600
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "Route Decision",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "approve-condition",
+              "leftValue": "={{ $json.query.action }}",
+              "rightValue": "approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Lead Intake": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead": {
+      "main": [
+        [
+          {
+            "node": "Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup Check": {
+      "main": [
+        [
+          {
+            "node": "Generate Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Outreach": {
+      "main": [
+        [
+          {
+            "node": "Parse Outreach JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Outreach JSON": {
+      "main": [
+        [
+          {
+            "node": "Wait for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Outreach": {
+      "main": [
+        [
+          {
+            "node": "Wait for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Approval": {
+      "main": [
+        [
+          {
+            "node": "Route Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "pinData": {}
+}

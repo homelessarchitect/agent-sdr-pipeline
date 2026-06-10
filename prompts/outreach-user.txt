@@ -1,0 +1,13 @@
+Datos del prospecto:
+- Nombre: {{ name }}
+- Empresa: {{ company }}
+- Cargo: {{ position }}
+- Dominio: {{ domain }}
+- Link de reserva: {{ calendly_link }}
+
+Instrucciones adicionales:
+- Si "cargo" está vacío, inferí el perfil típico de un founder/líder de una empresa B2B SaaS del tamaño de {{ company }}.
+- Si "dominio" está vacío, referenciá la empresa directamente por nombre.
+- El link de reserva DEBE aparecer una sola vez en el body, como CTA final.
+- No uses el dominio como link clickeable — solo como referencia de contexto si es útil.
+- Responde únicamente con el JSON. Sin explicaciones, sin markdown extra.

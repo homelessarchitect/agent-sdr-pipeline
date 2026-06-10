@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Martín Gómez",
+    "email": "martin@nexocrm.io",
+    "company": "NexoCRM",
+    "position": "CEO",
+    "domain": "nexocrm.io"
+  },
+  {
+    "name": "Valentina Ríos",
+    "email": "vrios@agentelab.com",
+    "company": "AgenteLab",
+    "position": "Co-founder",
+    "domain": "agentelab.com"
+  },
+  {
+    "name": "Diego Paredes",
+    "email": "d.paredes@pipefy.mx",
+    "company": "Pipefy MX",
+    "position": "Sales Lead",
+    "domain": "pipefy.mx"
+  },
+  {
+    "name": "Camila Torres",
+    "email": "ctorres@autonova.lat",
+    "company": "Autonova",
+    "position": "Founder",
+    "domain": "autonova.lat"
+  },
+  {
+    "name": "Sebastián Vera",
+    "email": "svera@flowsync.co",
+    "company": "FlowSync",
+    "position": "Head of Growth",
+    "domain": "flowsync.co"
+  }
+]

@@ -18,8 +18,8 @@
 - [ ] 1.6 In n8n UI: add HTTP Header Auth credential named `Resend-API` with `Authorization: Bearer <RESEND_API_KEY>`. Verify: credential appears in list, no validation error.
 - [ ] 1.7 In n8n UI: add HTTP Query Auth credential named `Hunter-API` with `api_key=<HUNTER_API_KEY>`. (Or use Generic Credential Type with query param.) Verify credential saved.
 - [ ] 1.8 In n8n UI: add HubSpot credential (type: HubSpot API, token = Private App token). Verify: n8n HubSpot node accepts it.
-- [ ] 1.9 Create `docker-compose.yml` at repo root. Include n8n service with hardening env vars: `N8N_RESTRICT_FILE_ACCESS_TO=/data` and `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`. Map port 5678. Add `data/` volume for workflow persistence.
-- [ ] 1.10 Create `.env.example` at repo root with all required vars: `N8N_HOST`, `N8N_PORT`, `N8N_PROTOCOL`, `WEBHOOK_URL`, `OPENAI_API_KEY`, `HUNTER_API_KEY`, `RESEND_API_KEY`, `HUBSPOT_ACCESS_TOKEN`, `TELEGRAM_CHAT_ID`, `CALENDLY_LINK`.
+- [x] 1.9 Create `docker-compose.yml` at repo root. Include n8n service with hardening env vars: `N8N_RESTRICT_FILE_ACCESS_TO=/data` and `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`. Map port 5678. Add `data/` volume for workflow persistence.
+- [x] 1.10 Create `.env.example` at repo root with all required vars: `N8N_HOST`, `N8N_PORT`, `N8N_PROTOCOL`, `WEBHOOK_URL`, `OPENAI_API_KEY`, `HUNTER_API_KEY`, `RESEND_API_KEY`, `HUBSPOT_ACCESS_TOKEN`, `TELEGRAM_CHAT_ID`, `CALENDLY_LINK`.
 
 ---
 
@@ -27,13 +27,13 @@
 
 _These tasks can start as soon as Phase 0 is done, regardless of Phase 1 HUMAN items._
 
-- [ ] 2.1 Create `workflows/sdr-pipeline-main.json` with nodes 1–3 (Lead Intake webhook, Normalize Lead Set, Dedup Check Code). `settings.executionOrder: "v1"`. Webhook path: `/sdr-lead`, `responseMode: lastNode`. Verify: POST to webhook returns 200; execution log shows 1 item after Normalize Lead.
-- [ ] 2.2 Write `data/sample-leads.json` with 5 LATAM leads (Martín Gómez, Valentina Ríos, Diego Paredes, Camila Torres, Sebastián Vera — real company domains from proposal). File must be valid JSON array. Verify: `cat data/sample-leads.json | python3 -m json.tool` exits 0.
-- [ ] 2.3 Write `prompts/outreach-system.txt`: ICP persona (LATAM B2B SaaS SDR), tone (direct, warm, Spanish), JSON schema instruction (`{"subject": "...", "body": "..."}`), max constraints (subject ≤ 9 words, body ≤ 120 words, 1 CTA = Calendly link).
-- [ ] 2.4 Write `prompts/outreach-user.txt`: template with `{{ name }}`, `{{ company }}`, `{{ position }}`, `{{ domain }}`, `{{ calendly_link }}` placeholders. Include fallback copy when enrichment fields are empty.
-- [ ] 2.5 Add nodes 6–8 to `sdr-pipeline-main.json` (Generate Outreach OpenAI node, Parse Outreach JSON Code node, Fallback Outreach Set node). Wire 6→7→8 with `onError: continueErrorOutput` on node 7. Verify: with a mocked lead item, node 6 outputs `message.content` with valid JSON; node 7 outputs `{ subject, body }`.
-- [ ] 2.6 Add node 10 (Wait for Approval) to `sdr-pipeline-main.json`. Config: `resume: "webhook"`, `options.webhookSuffix: ""`, timeout `options.maxWaitTime: 3600`. Verify: execution halts at Wait node; n8n execution log shows status "waiting".
-- [ ] 2.7 Add node 11 (Route Decision IF) wired after Wait. Condition: `$json.query.action === 'approve'`. Verify: creates two output branches (true/false) in the workflow graph.
+- [x] 2.1 Create `workflows/sdr-pipeline-main.json` with nodes 1–3 (Lead Intake webhook, Normalize Lead Set, Dedup Check Code). `settings.executionOrder: "v1"`. Webhook path: `/sdr-lead`, `responseMode: lastNode`. Verify: POST to webhook returns 200; execution log shows 1 item after Normalize Lead.
+- [x] 2.2 Write `data/sample-leads.json` with 5 LATAM leads (Martín Gómez, Valentina Ríos, Diego Paredes, Camila Torres, Sebastián Vera — real company domains from proposal). File must be valid JSON array. Verify: `cat data/sample-leads.json | python3 -m json.tool` exits 0.
+- [x] 2.3 Write `prompts/outreach-system.txt`: ICP persona (LATAM B2B SaaS SDR), tone (direct, warm, Spanish), JSON schema instruction (`{"subject": "...", "body": "..."}`), max constraints (subject ≤ 9 words, body ≤ 120 words, 1 CTA = Calendly link).
+- [x] 2.4 Write `prompts/outreach-user.txt`: template with `{{ name }}`, `{{ company }}`, `{{ position }}`, `{{ domain }}`, `{{ calendly_link }}` placeholders. Include fallback copy when enrichment fields are empty.
+- [x] 2.5 Add nodes 6–8 to `sdr-pipeline-main.json` (Generate Outreach OpenAI node, Parse Outreach JSON Code node, Fallback Outreach Set node). Wire 6→7→8 with `onError: continueErrorOutput` on node 7. Verify: with a mocked lead item, node 6 outputs `message.content` with valid JSON; node 7 outputs `{ subject, body }`.
+- [x] 2.6 Add node 10 (Wait for Approval) to `sdr-pipeline-main.json`. Config: `resume: "webhook"`, `options.webhookSuffix: ""`, timeout `options.maxWaitTime: 3600`. Verify: execution halts at Wait node; n8n execution log shows status "waiting".
+- [x] 2.7 Add node 11 (Route Decision IF) wired after Wait. Condition: `$json.query.action === 'approve'`. Verify: creates two output branches (true/false) in the workflow graph.
 
 ---
 
@@ -55,7 +55,7 @@ _These tasks can start as soon as Phase 0 is done, regardless of Phase 1 HUMAN i
 
 ## Phase 4: Test Trigger Workflow
 
-- [ ] 4.1 Create `workflows/sdr-test-trigger.json`. Code node reads `data/sample-leads.json`; iterates via SplitInBatches; HTTP Request node POSTs each lead to main webhook URL. Verify: trigger workflow POSTs 5 items; 5 executions appear in main workflow execution log.
+- [x] 4.1 Create `workflows/sdr-test-trigger.json`. Code node reads `data/sample-leads.json`; iterates via SplitInBatches; HTTP Request node POSTs each lead to main webhook URL. Verify: trigger workflow POSTs 5 items; 5 executions appear in main workflow execution log.
 
 ---
 

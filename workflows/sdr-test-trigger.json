@@ -1,0 +1,122 @@
+{
+  "id": "666fcae6-5f7d-44eb-b517-ffd9635b6066",
+  "name": "SDR Test Trigger",
+  "nodes": [
+    {
+      "id": "b2c3d4e5-0001-0001-0001-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {}
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000002",
+      "name": "Load Sample Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Sample leads are embedded here because n8n cannot read local files at runtime.\n// These match data/sample-leads.json exactly — keep in sync.\nconst leads = [\n  {\n    name: 'Martín Gómez',\n    email: 'martin@nexocrm.io',\n    company: 'NexoCRM',\n    position: 'CEO',\n    domain: 'nexocrm.io'\n  },\n  {\n    name: 'Valentina Ríos',\n    email: 'vrios@agentelab.com',\n    company: 'AgenteLab',\n    position: 'Co-founder',\n    domain: 'agentelab.com'\n  },\n  {\n    name: 'Diego Paredes',\n    email: 'd.paredes@pipefy.mx',\n    company: 'Pipefy MX',\n    position: 'Sales Lead',\n    domain: 'pipefy.mx'\n  },\n  {\n    name: 'Camila Torres',\n    email: 'ctorres@autonova.lat',\n    company: 'Autonova',\n    position: 'Founder',\n    domain: 'autonova.lat'\n  },\n  {\n    name: 'Sebastián Vera',\n    email: 'svera@flowsync.co',\n    company: 'FlowSync',\n    position: 'Head of Growth',\n    domain: 'flowsync.co'\n  }\n];\n\nreturn leads.map(lead => ({ json: lead }));"
+      }
+    },
+    {
+      "id": "b2c3d4e5-0003-0003-0003-000000000003",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "b2c3d4e5-0004-0004-0004-000000000004",
+      "name": "POST to Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL || 'http://localhost:5678/' }}webhook/sdr-lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ name: $json.name, email: $json.email, company: $json.company }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load Sample Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Sample Leads": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "POST to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "POST to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "pinData": {}
+}
