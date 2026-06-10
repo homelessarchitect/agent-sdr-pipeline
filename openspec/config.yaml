@@ -1,0 +1,77 @@
+schema: spec-driven
+
+context: |
+  Tech stack: n8n (workflow orchestration) + Claude/Anthropic API (LLM personalization) + Google Calendar + single CRM pipeline
+  Architecture: n8n workflow JSON artifacts; enrichment single-provider; one outreach channel; HITL approval gate before any send
+  Testing: none — manual validation via webhook-driven test leads + n8n execution logs
+  Style: workflow JSON files in workflows/, docs in docs/; no linter/formatter (JSON-only project)
+  Precedent: agent-whatsapp-rag (n8n + OpenAI gpt-4o-mini + Google + Telegram HITL, live in production)
+  Scope discipline: DEMO — one channel, one enrichment provider, one ICP. Hard timebox 2-3 days. The scope constraint IS the demo.
+
+strict_tdd: false
+
+testing:
+  strict_tdd: false
+  detected: "2026-06-09"
+  note: "Strict TDD Mode unavailable — no test runner detected. Validation is manual: webhook-triggered test leads + n8n execution log inspection."
+  test_runner:
+    framework: none
+    command: null
+  layers:
+    unit:
+      available: false
+      tool: null
+    integration:
+      available: false
+      tool: null
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: false
+    command: null
+  quality_tools:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected n8n workflows / nodes
+    - Enforce scope guardrail: one channel, one enrichment provider, one ICP
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Include HITL approval gate as an explicit scenario
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Note which n8n node types (type + typeVersion) are used per step
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, validation)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow n8n workflow JSON conventions (settings.executionOrder v1, no active field in POST)
+    - Load n8n skill family before writing any workflow JSON
+    - Load cold-email skill before writing any outreach copy or LLM prompt
+    - Load n8n-live-debug skill for the creo→pruebo→corrijo cycle
+    tdd: false
+    test_command: ""
+  verify:
+    - Trigger test lead via webhook and inspect execution logs node-by-node
+    - Confirm 0-output-item nodes (silent halts) are absent
+    - Confirm HITL gate fires before any message is sent
+    - Compare implementation against every spec scenario
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas (large removals)

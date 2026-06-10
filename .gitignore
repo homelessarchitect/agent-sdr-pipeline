@@ -20,3 +20,6 @@ __pycache__/
 *.local.json
 tmp/
 leads*.csv
+
+# SDD infrastructure (local tooling — not committed)
+.atl/
