@@ -479,6 +479,10 @@
     {
       "parameters": {
         "resume": "webhook",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 1,
+        "resumeUnit": "hours",
         "options": {
           "webhookSuffix": ""
         }
@@ -870,6 +874,70 @@
         3088,
         512
       ]
+    },
+    {
+      "id": "a1b2c3d4-0021-0021-0021-000000000021",
+      "name": "Has Human Decision",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2852,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-action",
+              "leftValue": "={{ $json.query?.action ?? '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "notes": "REQ-12: un timeout del Wait NO es un rechazo. Sin query.action (= expiró sin revisión) el flujo termina en Log Timeout sin tocar email/calendar/CRM."
+    },
+    {
+      "id": "a1b2c3d4-0022-0022-0022-000000000022",
+      "name": "Log Timeout",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3052,
+        600
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "to-status",
+              "name": "outcome",
+              "value": "approval window expired — no action taken",
+              "type": "string"
+            },
+            {
+              "id": "to-email",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -1059,7 +1127,7 @@
       "main": [
         [
           {
-            "node": "Route Decision",
+            "node": "Has Human Decision",
             "type": "main",
             "index": 0
           }
@@ -1184,6 +1252,24 @@
         [
           {
             "node": "Send Telegram Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Human Decision": {
+      "main": [
+        [
+          {
+            "node": "Route Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Timeout",
             "type": "main",
             "index": 0
           }
