@@ -48,10 +48,13 @@ Recorrer el canvas de izquierda a derecha SIN entrar en detalle. Señalar tres c
 2. El nodo **Wait** — "acá el pipeline se pausa y espera a un humano"
 3. Las ramas de error → alertas a Telegram (degrada, no colapsa)
 
-### 1:00–1:30 — Disparo (terminal)
-Correr el `curl` de Martín. Mientras responde, LA frase clave:
-> "Acá lo disparo a mano, pero este webhook lo alimenta tu formulario, tus Lead Ads
-> o tu lista de prospección — cualquier cosa que haga un POST."
+### 1:00–1:30 — Disparo (formulario en el navegador)
+Abrir `http://localhost:5678/form/sdr-lead-form` y llenar el form con Martín en cámara
+(workflow `SDR Form Intake` lo mapea y POSTea al webhook). LA frase clave:
+> "Este formulario es una fuente más: por detrás hay un webhook, así que acá se
+> enchufa tu landing, tus Lead Ads o tu lista de prospección — cualquier cosa
+> que haga un POST."
+Alternativa minimalista: el `curl` en terminal (mismo efecto, menos visual).
 
 ### 1:30–2:15 — Ejecución en vivo (n8n executions)
 Abrir la ejecución que acaba de aparecer. Mostrar:
@@ -62,9 +65,10 @@ Abrir la ejecución que acaba de aparecer. Mostrar:
 - La ejecución detenida en **Wait for Approval** (estado waiting)
 
 ### 2:15–2:45 — HITL (Telegram Desktop)
-Mostrar el mensaje: preview del lead + subject + body, botones **Aprobar / Rechazar**.
+Mostrar el mensaje: preview del lead + subject + body, links **✅ Aprobar / ❌ Rechazar**
+(son links de texto, no botones — Telegram rechaza URLs localhost en inline keyboards).
 > "Nada salió todavía. El humano decide en el punto exacto de no retorno."
-Tap **Aprobar** en cámara.
+Click en **Aprobar** en cámara — SIEMPRE desde Telegram Desktop en la Mac.
 
 ### 2:45–3:45 — Los 4 resultados (una ventana por resultado, ritmo rápido)
 1. **Gmail**: el email de outreach en el inbox (aclarar: "free tier de Resend entrega

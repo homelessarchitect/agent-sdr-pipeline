@@ -1,0 +1,79 @@
+{
+  "id": "SdrFormIntake001",
+  "name": "SDR Form Intake",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "b7e2a1c4-0001-4f00-9a00-000000000001",
+      "name": "Lead Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 0],
+      "webhookId": "sdr-lead-form",
+      "parameters": {
+        "path": "sdr-lead-form",
+        "formTitle": "Hablá con ventas",
+        "formDescription": "Dejanos tus datos y te contactamos en menos de 24 horas.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nombre completo",
+              "placeholder": "Martín Gómez",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email corporativo",
+              "fieldType": "email",
+              "placeholder": "martin@tuempresa.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Empresa",
+              "placeholder": "NexoCRM",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Cargo",
+              "placeholder": "CEO"
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "notes": "Formulario hosteado por n8n en /form/sdr-lead-form. Adaptador: cualquier fuente nueva (form, lead ads, chatbot) se enchufa al MISMO webhook del pipeline principal sin tocarlo."
+    },
+    {
+      "id": "b7e2a1c4-0002-4f00-9a00-000000000002",
+      "name": "POST to SDR Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/sdr-lead",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ name: $json['Nombre completo'], email: $json['Email corporativo'], company: $json['Empresa'], position: $json['Cargo'] || '', domain: ($json['Email corporativo'] || '').split('@')[1] || '' }) }}",
+        "options": {}
+      },
+      "notes": "Mapea las labels del form al contrato del pipeline (name/email/company/position/domain). El domain se deriva del email."
+    }
+  ],
+  "connections": {
+    "Lead Form": {
+      "main": [
+        [
+          {
+            "node": "POST to SDR Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
