@@ -798,6 +798,102 @@
         "jsCode": "// Telegram rechaza URLs localhost en botones inline — se necesita la URL\n// publica del tunel (scripts/start-tunnel.sh) para que Aprobar/Rechazar\n// funcionen desde cualquier dispositivo.\nconst lead = items[0].json;\n\nlet publicBase;\ntry {\n  const res = await this.helpers.httpRequest({\n    url: 'http://host.docker.internal:20241/quicktunnel',\n    json: true,\n    timeout: 3000,\n  });\n  if (res && res.hostname) publicBase = 'https://' + res.hostname;\n} catch (e) {\n  // sin tunel: error claro mas abajo\n}\n\nif (!publicBase) {\n  throw new Error('Tunel no disponible. Correr scripts/start-tunnel.sh antes de disparar leads — Telegram no acepta botones apuntando a localhost.');\n}\n\nconst resume = $execution.resumeUrl.replace(/^https?:\\/\\/[^/]+/, publicBase);\n\nreturn [{\n  json: {\n    ...lead,\n    approve_url: resume + '&action=approve',\n    reject_url: resume + '&action=reject',\n  },\n}];"
       },
       "notes": "Descubre la URL publica del quick tunnel (endpoint /quicktunnel de metricas de cloudflared) y reescribe el resumeUrl para los botones de Telegram. Preserva el item del lead. Falla con mensaje claro si el tunel no corre."
+    },
+    {
+      "id": "sticky-s1",
+      "name": "Sticky s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        80
+      ],
+      "parameters": {
+        "content": "## 1 · Intake + Dedup\nWebhook `POST /webhook/sdr-lead` — lo alimenta cualquier fuente (formulario, lead ads, CSV).\nNormaliza al contrato interno y corta duplicados contra HubSpot **antes de gastar en APIs**.",
+        "width": 1340,
+        "height": 320,
+        "color": 5
+      }
+    },
+    {
+      "id": "sticky-s2",
+      "name": "Sticky s2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        410
+      ],
+      "parameters": {
+        "content": "## 2 · Enriquecimiento\nHunter.io suma cargo, LinkedIn y confianza del email.\nSi falla → alerta a Telegram y el flujo **sigue** con confianza `failed`.",
+        "width": 460,
+        "height": 300,
+        "color": 6
+      }
+    },
+    {
+      "id": "sticky-s3",
+      "name": "Sticky s3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        410
+      ],
+      "parameters": {
+        "content": "## 3 · Outreach con IA\nOpenAI redacta subject + body personalizados (JSON validado).\nSi el LLM falla → **fallback estático**: el pipeline nunca se frena por el modelo.",
+        "width": 440,
+        "height": 380,
+        "color": 1
+      }
+    },
+    {
+      "id": "sticky-s4",
+      "name": "Sticky s4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2200,
+        300
+      ],
+      "parameters": {
+        "content": "## 4 · Human-in-the-loop\nPreview por Telegram con botones reales (URL pública vía túnel — `scripts/start-tunnel.sh`).\n⏸️ El flujo **se pausa** en Wait: nada toca el mundo real sin la decisión de un humano.",
+        "width": 860,
+        "height": 380,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky-s5",
+      "name": "Sticky s5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3080,
+        100
+      ],
+      "parameters": {
+        "content": "## 5 · Aprobado → Ejecución\nEmail (Resend) → cita (Google Calendar) → contacto + deal (HubSpot).\nErrores no fatales: alertan a Telegram y el CRM **se ejecuta igual**.",
+        "width": 900,
+        "height": 320,
+        "color": 4
+      }
+    },
+    {
+      "id": "sticky-s6",
+      "name": "Sticky s6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3080,
+        470
+      ],
+      "parameters": {
+        "content": "## 6 · Rechazado\nSin email, sin cita. El contacto queda `rejected` en HubSpot —\nel 'no' del humano también deja **trazabilidad** en el CRM.",
+        "width": 460,
+        "height": 240,
+        "color": 7
+      }
     }
   ],
   "connections": {
