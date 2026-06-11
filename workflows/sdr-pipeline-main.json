@@ -532,7 +532,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "specifyBody": "json",
-        "jsonBody": "={{ ({ from: 'onboarding@resend.dev', to: 'dariensherrera.dev@gmail.com', subject: $('Parse Outreach JSON').first().json.subject || 'SDR Outreach: ' + $('Merge Enrichment').first().json.company, html: '<p>' + ($('Parse Outreach JSON').first().json.body || '').replace(/\\n/g, '</p><p>') + '</p>' }) }}"
+        "jsonBody": "={{ ({ from: 'onboarding@resend.dev', to: 'darienplatzi@gmail.com', subject: $('Parse Outreach JSON').first().json.subject || 'SDR Outreach: ' + $('Merge Enrichment').first().json.company, html: '<p>' + ($('Parse Outreach JSON').first().json.body || '').replace(/\\n/g, '</p><p>') + '</p>' }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -541,7 +541,7 @@
         }
       },
       "onError": "continueErrorOutput",
-      "notes": "DEMO OVERRIDE: 'to' hardcoded to dariensherrera.dev@gmail.com. Resend free tier (onboarding@resend.dev sender) only delivers to the account owner inbox. In production, replace with lead email or use a verified Resend domain."
+      "notes": "DEMO OVERRIDE: 'to' hardcoded to darienplatzi@gmail.com (Resend account email). Resend free tier (onboarding@resend.dev sender) only delivers to the account owner inbox. In production, replace with lead email or use a verified Resend domain."
     },
     {
       "id": "a1b2c3d4-0012e-012e-012e-00000000012e",
@@ -554,7 +554,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=⚠️ Error in Send Email (Resend): {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Send Telegram Preview').first().json.email }}",
+        "text": "=⚠️ Error in Send Email (Resend): {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Merge Enrichment').first().json.email }}",
         "additionalFields": {}
       },
       "credentials": {
@@ -582,11 +582,11 @@
           "mode": "list",
           "cachedResultName": "primary"
         },
-        "start": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + (d.getDay() === 5 ? 3 : d.getDay() === 6 ? 2 : 1)); d.setHours(10, 0, 0, 0); return d.toISOString().replace('Z', '-05:00'); })() }}",
-        "end": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + (d.getDay() === 5 ? 3 : d.getDay() === 6 ? 2 : 1)); d.setHours(10, 30, 0, 0); return d.toISOString().replace('Z', '-05:00'); })() }}",
+        "start": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + (d.getDay() === 5 ? 3 : d.getDay() === 6 ? 2 : 1)); d.setHours(10, 0, 0, 0); return d.toISOString().slice(0, 19) + '-05:00'; })() }}",
+        "end": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + (d.getDay() === 5 ? 3 : d.getDay() === 6 ? 2 : 1)); d.setHours(10, 30, 0, 0); return d.toISOString().slice(0, 19) + '-05:00'; })() }}",
         "additionalFields": {
-          "summary": "=Outreach: {{ $('Send Telegram Preview').first().json.name }} / {{ $('Send Telegram Preview').first().json.company }}",
-          "description": "={{ $('Send Telegram Preview').first().json.body + '\n\n📅 Reservar: https://calendly.com/dariensherrera-dev/new-meeting' }}"
+          "summary": "=Outreach: {{ $('Merge Enrichment').first().json.name }} / {{ $('Merge Enrichment').first().json.company }}",
+          "description": "={{ $('Merge Enrichment').first().json.body + '\\n\\n📅 Reservar: https://calendly.com/dariensherrera-dev/new-meeting' }}"
         }
       },
       "credentials": {
@@ -608,7 +608,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=⚠️ Error in Create Calendar Event: {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Send Telegram Preview').first().json.email }}. CRM will still execute.",
+        "text": "=⚠️ Error in Create Calendar Event: {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Merge Enrichment').first().json.email }}. CRM will still execute.",
         "additionalFields": {}
       },
       "credentials": {
