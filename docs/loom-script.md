@@ -7,10 +7,13 @@
 ## Pre-flight (antes de apretar grabar)
 
 - [ ] n8n arriba: `curl -s http://localhost:5678/healthz` → `{"status":"ok"}`
+- [ ] **Túnel arriba: `./scripts/start-tunnel.sh`** — sin túnel, el nodo
+      `Build Approval Links` corta con error claro (Telegram no acepta botones
+      apuntando a localhost). Apagarlo al terminar: expone el n8n a internet.
 - [ ] Workflow `SDR Pipeline Main` ACTIVO en la UI
 - [ ] Borrar de la UI las ejecuciones viejas en estado `waiting` (panel limpio en cámara)
-- [ ] **Telegram Desktop abierto en la Mac** — los botones Aprobar/Rechazar usan
-      `localhost:5678`; desde el celular NO funcionan
+- [ ] Telegram abierto — los botones **✅ Aprobar / ❌ Rechazar** son inline keyboard
+      real con URL pública del túnel: funcionan desde el Desktop Y desde el celular
 - [ ] Ventanas listas (en este orden de aparición):
   1. Terminal con los dos `curl` ya tipeados en el historial
   2. n8n — canvas del workflow + panel de executions
@@ -64,11 +67,13 @@ Abrir la ejecución que acaba de aparecer. Mostrar:
 - Output de **Generate Outreach**: el subject y el body que escribió la IA
 - La ejecución detenida en **Wait for Approval** (estado waiting)
 
-### 2:15–2:45 — HITL (Telegram Desktop)
-Mostrar el mensaje: preview del lead + subject + body, links **✅ Aprobar / ❌ Rechazar**
-(son links de texto, no botones — Telegram rechaza URLs localhost en inline keyboards).
-> "Nada salió todavía. El humano decide en el punto exacto de no retorno."
-Click en **Aprobar** en cámara — SIEMPRE desde Telegram Desktop en la Mac.
+### 2:15–2:45 — HITL (Telegram)
+Mostrar el mensaje: preview del lead + subject + body y los botones inline
+**✅ Aprobar / ❌ Rechazar** (URL pública vía túnel — funcionan desde cualquier
+dispositivo).
+> "Nada salió todavía. El humano decide en el punto exacto de no retorno —
+> desde el celular, desde donde sea."
+Click en **Aprobar** en cámara (Telegram Desktop para que quede en pantalla).
 
 ### 2:45–3:45 — Los 4 resultados (una ventana por resultado, ritmo rápido)
 1. **Gmail**: el email de outreach en el inbox (aclarar: "free tier de Resend entrega
@@ -93,6 +98,7 @@ SIN evento.
 
 | Pasa esto | Hacés esto |
 |---|---|
+| Telegram llega sin botones / nodo Build Approval Links en error | El túnel no está corriendo → `./scripts/start-tunnel.sh` y retake |
 | Hunter no enriquece (dominio fake) | Narrarlo como graceful degradation — suma, no resta |
 | No llega el Telegram | Revisar ejecución en n8n; si murió, retake con lead inventado nuevo |
 | El email tarda en Gmail | Seguir con Calendar/HubSpot y volver al inbox al final |

@@ -444,14 +444,37 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2220,
+        2440,
         420
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=🚀 *Lead para revisar* — SDR Pipeline\n\n👤 *Nombre:* {{ $json.name }}\n🏢 *Empresa:* {{ $json.company }}\n📊 *Enrichment:* {{ $json.enrichment_confidence || 'not_found' }}{{ $json.position ? ' | ' + $json.position : '' }}\n\n📧 *Asunto:* {{ $json.subject }}\n\n📝 *Preview:* {{ ($json.body || '').substring(0, 200) }}...\n\n✅ Aprobar: {{ $execution.resumeUrl }}&action=approve\n❌ Rechazar: {{ $execution.resumeUrl }}&action=reject",
+        "text": "=🚀 *Lead para revisar* — SDR Pipeline\n\n👤 *Nombre:* {{ $json.name }}\n🏢 *Empresa:* {{ $json.company }}\n📊 *Enrichment:* {{ $json.enrichment_confidence || 'not_found' }}{{ $json.position ? ' | ' + $json.position : '' }}\n\n📧 *Asunto:* {{ $json.subject }}\n\n📝 *Preview:* {{ ($json.body || '').substring(0, 200) }}...",
         "additionalFields": {
           "parse_mode": "Markdown"
+        },
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Aprobar",
+                    "additionalFields": {
+                      "url": "={{ $json.approve_url }}"
+                    }
+                  },
+                  {
+                    "text": "❌ Rechazar",
+                    "additionalFields": {
+                      "url": "={{ $json.reject_url }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
         }
       },
       "credentials": {
@@ -469,7 +492,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        2440,
+        2660,
         420
       ],
       "parameters": {
@@ -487,7 +510,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2660,
+        2880,
         420
       ],
       "parameters": {
@@ -519,7 +542,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2880,
+        3100,
         300
       ],
       "parameters": {
@@ -549,7 +572,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3100,
+        3320,
         180
       ],
       "parameters": {
@@ -571,7 +594,7 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        3100,
+        3320,
         300
       ],
       "parameters": {
@@ -603,7 +626,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3320,
+        3540,
         180
       ],
       "parameters": {
@@ -625,7 +648,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3320,
+        3540,
         300
       ],
       "parameters": {
@@ -653,7 +676,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3540,
+        3760,
         300
       ],
       "parameters": {
@@ -681,7 +704,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2880,
+        3100,
         540
       ],
       "parameters": {
@@ -709,7 +732,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3100,
+        3320,
         540
       ],
       "parameters": {
@@ -761,6 +784,20 @@
         },
         "options": {}
       }
+    },
+    {
+      "id": "a1b2c3d4-0020-0020-0020-000000000020",
+      "name": "Build Approval Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        540
+      ],
+      "parameters": {
+        "jsCode": "// Telegram rechaza URLs localhost en botones inline — se necesita la URL\n// publica del tunel (scripts/start-tunnel.sh) para que Aprobar/Rechazar\n// funcionen desde cualquier dispositivo.\nconst lead = items[0].json;\n\nlet publicBase;\ntry {\n  const res = await this.helpers.httpRequest({\n    url: 'http://host.docker.internal:20241/quicktunnel',\n    json: true,\n    timeout: 3000,\n  });\n  if (res && res.hostname) publicBase = 'https://' + res.hostname;\n} catch (e) {\n  // sin tunel: error claro mas abajo\n}\n\nif (!publicBase) {\n  throw new Error('Tunel no disponible. Correr scripts/start-tunnel.sh antes de disparar leads — Telegram no acepta botones apuntando a localhost.');\n}\n\nconst resume = $execution.resumeUrl.replace(/^https?:\\/\\/[^/]+/, publicBase);\n\nreturn [{\n  json: {\n    ...lead,\n    approve_url: resume + '&action=approve',\n    reject_url: resume + '&action=reject',\n  },\n}];"
+      },
+      "notes": "Descubre la URL publica del quick tunnel (endpoint /quicktunnel de metricas de cloudflared) y reescribe el resumeUrl para los botones de Telegram. Preserva el item del lead. Falla con mensaje claro si el tunel no corre."
     }
   ],
   "connections": {
@@ -910,7 +947,7 @@
       "main": [
         [
           {
-            "node": "Send Telegram Preview",
+            "node": "Build Approval Links",
             "type": "main",
             "index": 0
           }
@@ -928,7 +965,7 @@
       "main": [
         [
           {
-            "node": "Send Telegram Preview",
+            "node": "Build Approval Links",
             "type": "main",
             "index": 0
           }
@@ -1068,6 +1105,17 @@
     "Log Duplicate Skip": {
       "main": [
         []
+      ]
+    },
+    "Build Approval Links": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
