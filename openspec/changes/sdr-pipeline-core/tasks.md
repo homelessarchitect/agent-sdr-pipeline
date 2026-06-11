@@ -2,19 +2,19 @@
 
 ## Phase 0: Stack Validation (GATE — must complete before provider-specific tasks)
 
-- [ ] 0.1 [HUMAN] Confirm stack decisions: D1 Hunter.io, D2 Resend, D3 HubSpot Free, D4 Telegram HITL. Record final answer before proceeding to Phase 2.
-- [ ] 0.2 [HUMAN] Confirm n8n instance to use: same container as agent-whatsapp-rag (recommended — reuses Telegram credential id `2FS5wXdKOH1ubUwk` and the running container). Record the base URL (e.g. `http://localhost:5678`).
-- [ ] 0.3 Verify n8n Docker image version >= 1.22 (`docker inspect <container> | grep Image`). `$execution.resumeUrl` is undefined on earlier versions — pipeline cannot work without this.
+- [x] 0.1 [HUMAN] Confirm stack decisions: D1 Hunter.io, D2 Resend, D3 HubSpot Free, D4 Telegram HITL. Record final answer before proceeding to Phase 2. _(Confirmed — all 4 providers live-verified in execution #80.)_
+- [x] 0.2 [HUMAN] Confirm n8n instance to use: same container as agent-whatsapp-rag (recommended — reuses Telegram credential id `2FS5wXdKOH1ubUwk` and the running container). Record the base URL (e.g. `http://localhost:5678`). _(Confirmed: container `lumina-n8n` at `http://localhost:5678`.)_
+- [x] 0.3 Verify n8n Docker image version >= 1.22 (`docker inspect <container> | grep Image`). `$execution.resumeUrl` is undefined on earlier versions — pipeline cannot work without this. _(Verified implicitly: Wait/resume via `$execution.resumeUrl` worked live in executions #75/#78/#80.)_
 
 ---
 
 ## Phase 1: Infrastructure & Credentials (HUMAN-blocked items marked)
 
-- [ ] 1.1 [HUMAN] Create Hunter.io account (free tier). Generate API key. Keep ready for n8n credential creation.
-- [ ] 1.2 [HUMAN] Create Resend account (free tier). Generate API key. Configure a sender domain (or use `onboarding@resend.dev` for dev/demo). Keep ready.
-- [ ] 1.3 [HUMAN] Create HubSpot Free account. Create a Private App with scopes: `crm.objects.contacts.write`, `crm.objects.deals.write`, `crm.objects.contacts.read`. Copy the access token.
+- [x] 1.1 [HUMAN] Create Hunter.io account (free tier). Generate API key. Keep ready for n8n credential creation. _(Done — Hunter Enrich ran live in execution #80.)_
+- [x] 1.2 [HUMAN] Create Resend account (free tier). Generate API key. Configure a sender domain (or use `onboarding@resend.dev` for dev/demo). Keep ready. _(Done — account email `darienplatzi@gmail.com`; demo override sends there.)_
+- [x] 1.3 [HUMAN] Create HubSpot Free account. Create a Private App with scopes: `crm.objects.contacts.write`, `crm.objects.deals.write`, `crm.objects.contacts.read`. Copy the access token. _(Done — contact+deal created live in execution #80.)_
 - [x] 1.4 [HUMAN] After HubSpot account is live, query pipeline ID and stage ID: `GET https://api.hubapi.com/crm/v3/pipelines/deals` with the token. Record `pipeline` (default) and `dealstage` (first stage ID) — these are account-specific and required by node 15.
-- [ ] 1.5 [HUMAN] Confirm Google Calendar OAuth credential in n8n (reuse from sibling if available). If fresh: enable Calendar API in the GCP Cloud project (`Google Calendar API` must be enabled — 403 without it); complete OAuth flow in n8n UI (Credentials → New → Google Calendar OAuth2).
+- [x] 1.5 [HUMAN] Confirm Google Calendar OAuth credential in n8n (reuse from sibling if available). If fresh: enable Calendar API in the GCP Cloud project (`Google Calendar API` must be enabled — 403 without it); complete OAuth flow in n8n UI (Credentials → New → Google Calendar OAuth2). _(Done — Calendar event created live in execution #80.)_
 - [x] 1.6 In n8n UI: add HTTP Header Auth credential named `Resend-API` with `Authorization: Bearer <RESEND_API_KEY>`. Verify: credential appears in list, no validation error.
 - [x] 1.7 In n8n UI: add HTTP Query Auth credential named `Hunter-API` with `api_key=<HUNTER_API_KEY>`. (Or use Generic Credential Type with query param.) Verify credential saved.
 - [x] 1.8 In n8n UI: add HubSpot credential (type: HubSpot API, token = Private App token). Verify: n8n HubSpot node accepts it.
@@ -64,9 +64,9 @@ _These tasks can start as soon as Phase 0 is done, regardless of Phase 1 HUMAN i
 _All tasks in this phase require the workflow to be ACTIVATED — not run via "Test Workflow" in n8n UI. Use production webhook URL._
 
 - [x] 5.1 Activate `sdr-pipeline-main` in n8n UI. Verify: workflow status = active; webhook URL is live (GET returns 405, not 404).
-- [ ] 5.2 Live happy path: POST `martin@nexocrm.io` lead to webhook → confirm Telegram notification arrives with Approve/Reject buttons → tap Aprobar → verify email in inbox, Calendar event created, HubSpot contact+deal visible. All 4 outcomes required (REQ-10, REQ-14, REQ-17, REQ-19, REQ-20).
+- [x] 5.2 Live happy path: POST `martin@nexocrm.io` lead to webhook → confirm Telegram notification arrives with Approve/Reject buttons → tap Aprobar → verify email in inbox, Calendar event created, HubSpot contact+deal visible. All 4 outcomes required (REQ-10, REQ-14, REQ-17, REQ-19, REQ-20). _(Done with `vrios@agentelab.com` instead — execution #80, 2026-06-10: email + calendar + HubSpot contact + deal all ran. `martin` kept clean for the Loom recording.)_
 - [ ] 5.3 Live reject path: POST `vrios@agentelab.com` lead → tap Rechazar → verify HubSpot contact has `outreach_status: "rejected"`, NO email sent, NO calendar event (REQ-11, REQ-21).
-- [ ] 5.4 Dedup path: POST `martin@nexocrm.io` a second time → verify pipeline halts at Dedup Check with "duplicate — skipped"; no Telegram sent (REQ-03, REQ-22).
+- [x] 5.4 Dedup path: POST `martin@nexocrm.io` a second time → verify pipeline halts at Dedup Check with "duplicate — skipped"; no Telegram sent (REQ-03, REQ-22). _(Done with `d.paredes@pipefy.mx` — execution #79, 2026-06-10: re-POST halted in ~1s, no HubSpot upsert, no Telegram.)_
 - [ ] 5.5 Enrichment error path: temporarily set invalid Hunter API key → POST lead → verify pipeline continues to HITL with `enrichment_confidence: "failed"` visible in Telegram message (REQ-06). Restore key after.
 - [ ] 5.6 Double-click guard: complete an approval run; manually re-tap Approve from the same Telegram message (or re-hit the resumeUrl) → verify n8n rejects second call (REQ-13); single email, single CRM record.
 - [ ] 5.7 Wait timeout: configure `maxWaitTime: 60` (1 min) temporarily → POST lead → do NOT tap → confirm execution terminates after 60s with no email/calendar/CRM (REQ-12). Restore to 3600 after.
