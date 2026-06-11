@@ -94,7 +94,8 @@
           "id": "rZmpwfn0wBlvHN2B",
           "name": "HubSpot-API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -657,7 +658,8 @@
           "id": "rZmpwfn0wBlvHN2B",
           "name": "HubSpot-API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -683,7 +685,8 @@
           "id": "rZmpwfn0wBlvHN2B",
           "name": "HubSpot-API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -709,7 +712,8 @@
           "id": "rZmpwfn0wBlvHN2B",
           "name": "HubSpot-API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -735,7 +739,8 @@
           "id": "rZmpwfn0wBlvHN2B",
           "name": "HubSpot-API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -938,6 +943,28 @@
         "includeOtherFields": false,
         "options": {}
       }
+    },
+    {
+      "id": "a1b2c3d4-0023-0023-0023-000000000023",
+      "name": "CRM Error Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4048,
+        596
+      ],
+      "parameters": {
+        "chatId": "7145253938",
+        "text": "=⚠️ Error CRM/HubSpot en {{ $prevNode.name }}: {{ $json.error?.message || $json.error?.description || 'Unknown error' }} — lead: {{ $('Normalize Lead').first().json.email }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "2FS5wXdKOH1ubUwk",
+          "name": "Telegram Lumina"
+        }
+      },
+      "notes": "REQ-23: cualquier error de HubSpot (dedup search, upsert, deal, reject) alerta al operador en vez de morir en silencio. Rama terminal: sin contacto no hay deal posible."
     }
   ],
   "connections": {
@@ -968,6 +995,13 @@
         [
           {
             "node": "Dedup Gate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CRM Error Alert",
             "type": "main",
             "index": 0
           }
@@ -1218,12 +1252,26 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "CRM Error Alert",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "HubSpot Create Deal": {
       "main": [
-        []
+        [],
+        [
+          {
+            "node": "CRM Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Mark Rejected": {
@@ -1234,12 +1282,26 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "CRM Error Alert",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "HubSpot Rejection Note": {
       "main": [
-        []
+        [],
+        [
+          {
+            "node": "CRM Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Log Duplicate Skip": {
