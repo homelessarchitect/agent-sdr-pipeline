@@ -17,7 +17,8 @@
         "responseMode": "onReceived",
         "responseData": "noData",
         "options": {}
-      }
+      },
+      "webhookId": "ed7d83e5-14ac-4939-97fa-f0c6421f5993"
     },
     {
       "id": "a1b2c3d4-0002-0002-0002-000000000002",
@@ -77,14 +78,17 @@
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: $json.email }] }], properties: ['email', 'outreach_status'], limit: 1 }) }}",
         "options": {
           "response": {
             "response": {
               "neverError": true
             }
           }
-        }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: $json.email }] }], properties: ['email', 'outreach_status'], limit: 1 }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -103,7 +107,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "// REQ-03: dedup via HubSpot search result\n// $json contains the HubSpot search response\n// $('Normalize Lead').first().json contains the original lead\n\nconst lead = $('Normalize Lead').first().json;\nconst searchResult = items[0].json;\n\n// Basic field validation\nif (!lead.email || !lead.name || !lead.company) {\n  throw new Error('Missing required field: name, email, and company are all required');\n}\n\nconst emailPattern = /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/;\nif (!emailPattern.test(lead.email)) {\n  throw new Error(`Invalid email format: ${lead.email}`);\n}\n\n// Check HubSpot search result \u2014 if contact exists, it's a duplicate\nconst total = searchResult?.total ?? 0;\n\nif (total > 0) {\n  // Duplicate found \u2014 return empty array to halt this branch silently\n  // The duplicate-skip Respond node is wired on the 'false' branch of the next IF\n  return [{\n    json: {\n      ...lead,\n      is_duplicate: true,\n      duplicate_note: `Duplicate email found in HubSpot: ${lead.email}`\n    }\n  }];\n}\n\n// Not a duplicate \u2014 continue pipeline\nreturn [{\n  json: {\n    ...lead,\n    is_duplicate: false,\n    dedup_checked: true\n  }\n}];"
+        "jsCode": "// REQ-03: dedup via HubSpot search result\n// $json contains the HubSpot search response\n// $('Normalize Lead').first().json contains the original lead\n\nconst lead = $('Normalize Lead').first().json;\nconst searchResult = items[0].json;\n\n// Basic field validation\nif (!lead.email || !lead.name || !lead.company) {\n  throw new Error('Missing required field: name, email, and company are all required');\n}\n\nconst emailPattern = /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/;\nif (!emailPattern.test(lead.email)) {\n  throw new Error(`Invalid email format: ${lead.email}`);\n}\n\n// Check HubSpot search result — if contact exists, it's a duplicate\nconst total = searchResult?.total ?? 0;\n\nif (total > 0) {\n  // Duplicate found — return empty array to halt this branch silently\n  // The duplicate-skip Respond node is wired on the 'false' branch of the next IF\n  return [{\n    json: {\n      ...lead,\n      is_duplicate: true,\n      duplicate_note: `Duplicate email found in HubSpot: ${lead.email}`\n    }\n  }];\n}\n\n// Not a duplicate — continue pipeline\nreturn [{\n  json: {\n    ...lead,\n    is_duplicate: false,\n    dedup_checked: true\n  }\n}];"
       }
     },
     {
@@ -169,7 +173,9 @@
               "neverError": true
             }
           }
-        }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth"
       },
       "credentials": {
         "httpQueryAuth": {
@@ -190,7 +196,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=\u26a0\ufe0f Error in Hunter Enrich: {{ $json.error?.message || 'Unknown error' }} \u2014 lead: {{ $('Normalize Lead').first().json.email }}",
+        "text": "=⚠️ Error in Hunter Enrich: {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Normalize Lead').first().json.email }}",
         "additionalFields": {}
       },
       "credentials": {
@@ -198,7 +204,8 @@
           "id": "2FS5wXdKOH1ubUwk",
           "name": "Telegram Lumina"
         }
-      }
+      },
+      "webhookId": "dcfdca02-4e5f-4659-8b0e-75bb66c56cee"
     },
     {
       "id": "a1b2c3d4-0004f-004f-004f-00000000004f",
@@ -333,11 +340,11 @@
           "values": [
             {
               "role": "system",
-              "content": "Sos un SDR senior especializado en ventas B2B SaaS para el mercado LATAM. Tu misi\u00f3n es escribir emails de outreach en fr\u00edo que abran conversaciones reales con founders y l\u00edderes de agencias digitales, startups de 5 a 50 empleados que venden a otras pymes.\n\nTu tono es directo y cercano \u2014 como un par reflexivo que lleg\u00f3 a una idea, no un vendedor que lanz\u00f3 un pitch. Us\u00e1s voseo natural. Nunca abr\u00eds con \"Espero que este email te encuentre bien\" ni frases corporativas vac\u00edas.\n\nFramework de escritura (en orden estricto):\n1. Observaci\u00f3n \u2014 algo espec\u00edfico de su empresa o rol. Si no existe enriquecimiento, us\u00e1 el nombre de la empresa como ancla.\n2. Problema \u2014 una fricci\u00f3n concreta que ese perfil enfrenta (pipeline impredecible, seguimiento manual, leads sin contexto).\n3. Prueba \u2014 un resultado concreto de lo que pod\u00e9s hacer, no una lista de features.\n4. Ask \u2014 un pedido de bajo compromiso: 15 minutos, una llamada r\u00e1pida.\n\nReglas duras:\n- subject: m\u00e1ximo 9 palabras, min\u00fasculas, aspecto interno (como si fuera un mensaje entre colegas).\n- body: m\u00e1ximo 120 palabras en espa\u00f1ol.\n- Exactamente 1 CTA: el link de Calendly provisto. Nada m\u00e1s, nada menos.\n- \"you/your\" dominante en ingl\u00e9s \u2192 en espa\u00f1ol: vos/tu empresa de forma natural.\n- Si no hay datos de enriquecimiento, us\u00e1 solo nombre y empresa \u2014 no inventes datos.\n- El cuerpo debe referenciar algo espec\u00edfico de la persona o empresa (nombre, dominio, rol, o industria). Si nada de eso existe, el nombre de la empresa es suficiente como ancla.\n\nSalida esperada \u2014 JSON con exactamente estas dos claves, sin texto extra:\n{\"subject\": \"...\", \"body\": \"...\"}"
+              "content": "Sos un SDR senior especializado en ventas B2B SaaS para el mercado LATAM. Tu misión es escribir emails de outreach en frío que abran conversaciones reales con founders y líderes de agencias digitales, startups de 5 a 50 empleados que venden a otras pymes.\n\nTu tono es directo y cercano — como un par reflexivo que llegó a una idea, no un vendedor que lanzó un pitch. Usás voseo natural. Nunca abrís con \"Espero que este email te encuentre bien\" ni frases corporativas vacías.\n\nFramework de escritura (en orden estricto):\n1. Observación — algo específico de su empresa o rol. Si no existe enriquecimiento, usá el nombre de la empresa como ancla.\n2. Problema — una fricción concreta que ese perfil enfrenta (pipeline impredecible, seguimiento manual, leads sin contexto).\n3. Prueba — un resultado concreto de lo que podés hacer, no una lista de features.\n4. Ask — un pedido de bajo compromiso: 15 minutos, una llamada rápida.\n\nReglas duras:\n- subject: máximo 9 palabras, minúsculas, aspecto interno (como si fuera un mensaje entre colegas).\n- body: máximo 120 palabras en español.\n- Exactamente 1 CTA: el link de Calendly provisto. Nada más, nada menos.\n- \"you/your\" dominante en inglés → en español: vos/tu empresa de forma natural.\n- Si no hay datos de enriquecimiento, usá solo nombre y empresa — no inventes datos.\n- El cuerpo debe referenciar algo específico de la persona o empresa (nombre, dominio, rol, o industria). Si nada de eso existe, el nombre de la empresa es suficiente como ancla.\n\nSalida esperada — JSON con exactamente estas dos claves, sin texto extra:\n{\"subject\": \"...\", \"body\": \"...\"}"
             },
             {
               "role": "user",
-              "content": "=Datos del prospecto:\n- Nombre: {{ $json.name }}\n- Empresa: {{ $json.company }}\n- Cargo: {{ $json.position || '' }}\n- Dominio: {{ $json.domain || '' }}\n- Link de reserva: https://calendly.com/dariensherrera-dev/new-meeting\n\nInstrucciones adicionales:\n- Si \"cargo\" est\u00e1 vac\u00edo, infer\u00ed el perfil t\u00edpico de un founder/l\u00edder de una empresa B2B SaaS del tama\u00f1o de {{ $json.company }}.\n- Si \"dominio\" est\u00e1 vac\u00edo, referenci\u00e1 la empresa directamente por nombre.\n- El link de reserva DEBE aparecer una sola vez en el body, como CTA final.\n- No uses el dominio como link clickeable \u2014 solo como referencia de contexto si es \u00fatil.\n- Responde \u00fanicamente con el JSON. Sin explicaciones, sin markdown extra."
+              "content": "=Datos del prospecto:\n- Nombre: {{ $json.name }}\n- Empresa: {{ $json.company }}\n- Cargo: {{ $json.position || '' }}\n- Dominio: {{ $json.domain || '' }}\n- Link de reserva: https://calendly.com/dariensherrera-dev/new-meeting\n\nInstrucciones adicionales:\n- Si \"cargo\" está vacío, inferí el perfil típico de un founder/líder de una empresa B2B SaaS del tamaño de {{ $json.company }}.\n- Si \"dominio\" está vacío, referenciá la empresa directamente por nombre.\n- El link de reserva DEBE aparecer una sola vez en el body, como CTA final.\n- No uses el dominio como link clickeable — solo como referencia de contexto si es útil.\n- Responde únicamente con el JSON. Sin explicaciones, sin markdown extra."
             }
           ]
         },
@@ -362,7 +369,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=\u26a0\ufe0f Error in Generate Outreach (LLM): {{ $json.error?.message || 'Unknown error' }} \u2014 lead: {{ $('Merge Enrichment').first().json.email || $('Dedup Gate').first().json.email }}",
+        "text": "=⚠️ Error in Generate Outreach (LLM): {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Merge Enrichment').first().json.email || $('Dedup Gate').first().json.email }}",
         "additionalFields": {}
       },
       "credentials": {
@@ -370,7 +377,8 @@
           "id": "2FS5wXdKOH1ubUwk",
           "name": "Telegram Lumina"
         }
-      }
+      },
+      "webhookId": "819e394e-5ebb-4e2b-9cc0-6417239fdbb2"
     },
     {
       "id": "a1b2c3d4-0007-0007-0007-000000000007",
@@ -382,7 +390,7 @@
         420
       ],
       "parameters": {
-        "jsCode": "// Parse the LLM JSON output and merge with lead context.\nconst llmOutput = $('Generate Outreach').first().json;\nconst lead = $('Merge Enrichment').first().json;\n\nconst rawContent = llmOutput?.message?.content || llmOutput?.text || '';\n\nif (!rawContent) {\n  throw new Error('LLM returned empty content \u2014 cannot parse outreach');\n}\n\n// Strip markdown code fences if present\nconst cleaned = rawContent.replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Failed to parse LLM JSON: ${e.message} \u2014 raw: ${rawContent.substring(0, 200)}`);\n}\n\nif (!parsed.subject || !parsed.body) {\n  throw new Error(`LLM output missing required keys. Got: ${Object.keys(parsed).join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...lead,\n    subject: parsed.subject,\n    body: parsed.body,\n    outreach_generated: true\n  }\n}];"
+        "jsCode": "// Parse the LLM JSON output and merge with lead context.\nconst llmOutput = $('Generate Outreach').first().json;\nconst lead = $('Merge Enrichment').first().json;\n\nconst rawContent = llmOutput?.message?.content || llmOutput?.text || '';\n\nif (!rawContent) {\n  throw new Error('LLM returned empty content — cannot parse outreach');\n}\n\n// Strip markdown code fences if present\nconst cleaned = rawContent.replace(/^```(?:json)?\\n?/, '').replace(/\\n?```$/, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(`Failed to parse LLM JSON: ${e.message} — raw: ${rawContent.substring(0, 200)}`);\n}\n\nif (!parsed.subject || !parsed.body) {\n  throw new Error(`LLM output missing required keys. Got: ${Object.keys(parsed).join(', ')}`);\n}\n\nreturn [{\n  json: {\n    ...lead,\n    subject: parsed.subject,\n    body: parsed.body,\n    outreach_generated: true\n  }\n}];"
       },
       "onError": "continueErrorOutput"
     },
@@ -409,7 +417,7 @@
             {
               "id": "fb-body",
               "name": "body",
-              "value": "=Hola {{ $('Merge Enrichment').first().json.name || $('Dedup Gate').first().json.name }},\n\nVi que {{ $('Merge Enrichment').first().json.company || $('Dedup Gate').first().json.company }} est\u00e1 en una etapa donde el pipeline de ventas puede volverse un cuello de botella real.\n\nAyudo a equipos como el tuyo a automatizar el proceso completo \u2014 desde el primer contacto hasta el CRM \u2014 sin sumar m\u00e1s gente al equipo.\n\n\u00bfTen\u00e9s 15 minutos esta semana? https://calendly.com/dariensherrera-dev/new-meeting",
+              "value": "=Hola {{ $('Merge Enrichment').first().json.name || $('Dedup Gate').first().json.name }},\n\nVi que {{ $('Merge Enrichment').first().json.company || $('Dedup Gate').first().json.company }} está en una etapa donde el pipeline de ventas puede volverse un cuello de botella real.\n\nAyudo a equipos como el tuyo a automatizar el proceso completo — desde el primer contacto hasta el CRM — sin sumar más gente al equipo.\n\n¿Tenés 15 minutos esta semana? https://calendly.com/dariensherrera-dev/new-meeting",
               "type": "string"
             },
             {
@@ -421,7 +429,7 @@
             {
               "id": "fb-error",
               "name": "outreach_error",
-              "value": "LLM parse failed \u2014 using static fallback",
+              "value": "LLM parse failed — using static fallback",
               "type": "string"
             }
           ]
@@ -441,10 +449,9 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=\ud83d\ude80 *Lead para revisar* \u2014 SDR Pipeline\n\n\ud83d\udc64 *Nombre:* {{ $json.name }}\n\ud83c\udfe2 *Empresa:* {{ $json.company }}\n\ud83d\udcca *Enrichment:* {{ $json.enrichment_confidence || 'not_found' }}{{ $json.position ? ' | ' + $json.position : '' }}\n\n\ud83d\udce7 *Asunto:* {{ $json.subject }}\n\n\ud83d\udcdd *Preview:* {{ ($json.body || '').substring(0, 200) }}...\n\nTap\u00e1 un bot\u00f3n para decidir:",
+        "text": "=🚀 *Lead para revisar* — SDR Pipeline\n\n👤 *Nombre:* {{ $json.name }}\n🏢 *Empresa:* {{ $json.company }}\n📊 *Enrichment:* {{ $json.enrichment_confidence || 'not_found' }}{{ $json.position ? ' | ' + $json.position : '' }}\n\n📧 *Asunto:* {{ $json.subject }}\n\n📝 *Preview:* {{ ($json.body || '').substring(0, 200) }}...\n\n✅ Aprobar: {{ $execution.resumeUrl }}&action=approve\n❌ Rechazar: {{ $execution.resumeUrl }}&action=reject",
         "additionalFields": {
-          "parse_mode": "Markdown",
-          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[{ text: '\u2705 Aprobar', url: $execution.resumeUrl + '?action=approve' }, { text: '\u274c Rechazar', url: $execution.resumeUrl + '?action=reject' }]] }) }}"
+          "parse_mode": "Markdown"
         }
       },
       "credentials": {
@@ -452,7 +459,9 @@
           "id": "2FS5wXdKOH1ubUwk",
           "name": "Telegram Lumina"
         }
-      }
+      },
+      "webhookId": "ab3927ef-4b91-4b64-bd7f-baf2fa942442",
+      "notes": "DEMO MODE: Approve/Reject links in message text (not inline buttons). Inline keyboard URL buttons require a publicly accessible WEBHOOK_URL (not localhost). To enable real inline buttons: set up cloudflared tunnel, update WEBHOOK_URL in .env, restart n8n."
     },
     {
       "id": "a1b2c3d4-0010-0010-0010-000000000010",
@@ -469,7 +478,8 @@
           "webhookSuffix": "",
           "maxWaitTime": 3600
         }
-      }
+      },
+      "webhookId": "1ca9759f-56d0-4c82-808d-61b0fe37a38d"
     },
     {
       "id": "a1b2c3d4-0011-0011-0011-000000000011",
@@ -518,8 +528,11 @@
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ from: 'onboarding@resend.dev', to: $('Wait for Approval').first().json.body?.email || $('Send Telegram Preview').first().json.email, subject: $('Send Telegram Preview').first().json.subject, text: $('Send Telegram Preview').first().json.body }) }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ from: 'onboarding@resend.dev', to: 'dariensherrera.dev@gmail.com', subject: $('Parse Outreach JSON').first().json.subject || 'SDR Outreach: ' + $('Merge Enrichment').first().json.company, html: '<p>' + ($('Parse Outreach JSON').first().json.body || '').replace(/\\n/g, '</p><p>') + '</p>' }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -528,7 +541,7 @@
         }
       },
       "onError": "continueErrorOutput",
-      "notes": "RESEND FREE-TIER NOTE: With sender onboarding@resend.dev, Resend only delivers to the account owner's verified inbox. Sample leads use fictional emails. To test real delivery, set DEMO_EMAIL_OVERRIDE in .env and update the 'to' field here. CRM fields always store the real lead email regardless."
+      "notes": "DEMO OVERRIDE: 'to' hardcoded to dariensherrera.dev@gmail.com. Resend free tier (onboarding@resend.dev sender) only delivers to the account owner inbox. In production, replace with lead email or use a verified Resend domain."
     },
     {
       "id": "a1b2c3d4-0012e-012e-012e-00000000012e",
@@ -541,7 +554,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=\u26a0\ufe0f Error in Send Email (Resend): {{ $json.error?.message || 'Unknown error' }} \u2014 lead: {{ $('Send Telegram Preview').first().json.email }}",
+        "text": "=⚠️ Error in Send Email (Resend): {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Send Telegram Preview').first().json.email }}",
         "additionalFields": {}
       },
       "credentials": {
@@ -549,7 +562,8 @@
           "id": "2FS5wXdKOH1ubUwk",
           "name": "Telegram Lumina"
         }
-      }
+      },
+      "webhookId": "17b22d98-cdea-4d65-8d4b-500775a48963"
     },
     {
       "id": "a1b2c3d4-0013-0013-0013-000000000013",
@@ -572,7 +586,7 @@
         "end": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + (d.getDay() === 5 ? 3 : d.getDay() === 6 ? 2 : 1)); d.setHours(10, 30, 0, 0); return d.toISOString().replace('Z', '-05:00'); })() }}",
         "additionalFields": {
           "summary": "=Outreach: {{ $('Send Telegram Preview').first().json.name }} / {{ $('Send Telegram Preview').first().json.company }}",
-          "description": "={{ $('Send Telegram Preview').first().json.body + '\n\n\ud83d\udcc5 Reservar: https://calendly.com/dariensherrera-dev/new-meeting' }}"
+          "description": "={{ $('Send Telegram Preview').first().json.body + '\n\n📅 Reservar: https://calendly.com/dariensherrera-dev/new-meeting' }}"
         }
       },
       "credentials": {
@@ -594,7 +608,7 @@
       ],
       "parameters": {
         "chatId": "7145253938",
-        "text": "=\u26a0\ufe0f Error in Create Calendar Event: {{ $json.error?.message || 'Unknown error' }} \u2014 lead: {{ $('Send Telegram Preview').first().json.email }}. CRM will still execute.",
+        "text": "=⚠️ Error in Create Calendar Event: {{ $json.error?.message || 'Unknown error' }} — lead: {{ $('Send Telegram Preview').first().json.email }}. CRM will still execute.",
         "additionalFields": {}
       },
       "credentials": {
@@ -602,7 +616,8 @@
           "id": "2FS5wXdKOH1ubUwk",
           "name": "Telegram Lumina"
         }
-      }
+      },
+      "webhookId": "a1f5ca62-eb91-4805-a51c-ff95ef1b301a"
     },
     {
       "id": "a1b2c3d4-0014-0014-0014-000000000014",
@@ -615,12 +630,15 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts/upsert",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $('Send Telegram Preview').first().json.email, properties: { email: $('Send Telegram Preview').first().json.email, firstname: ($('Send Telegram Preview').first().json.name || '').split(' ')[0] || '', lastname: ($('Send Telegram Preview').first().json.name || '').split(' ').slice(1).join(' ') || '', company: $('Send Telegram Preview').first().json.company || '', jobtitle: $('Send Telegram Preview').first().json.position || '', outreach_status: 'sent' } }] }) }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ inputs: [{ idProperty: 'email', id: $('Merge Enrichment').first().json.email, properties: { email: $('Merge Enrichment').first().json.email, firstname: ($('Merge Enrichment').first().json.name || '').split(' ')[0] || '', lastname: ($('Merge Enrichment').first().json.name || '').split(' ').slice(1).join(' ') || '', company: $('Merge Enrichment').first().json.company || '', jobtitle: $('Merge Enrichment').first().json.position || '', outreach_status: 'sent' } }] }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -644,8 +662,11 @@
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ properties: { dealname: ($('Send Telegram Preview').first().json.company || 'Unknown') + ' \u2014 SDR Demo', pipeline: 'default', dealstage: 'appointmentscheduled', amount: 0 }, associations: [{ to: { id: ($json.results?.[0]?.id || '') }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }] }] }) }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ properties: { dealname: ($('Merge Enrichment').first().json.company || 'Unknown') + ' — SDR Demo', pipeline: 'default', dealstage: 'appointmentscheduled', amount: 0 }, associations: [{ to: { id: $json.results?.[0]?.id || '' }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }] }] }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -665,12 +686,15 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts/upsert",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $('Send Telegram Preview').first().json.email, properties: { email: $('Send Telegram Preview').first().json.email, firstname: ($('Send Telegram Preview').first().json.name || '').split(' ')[0] || '', lastname: ($('Send Telegram Preview').first().json.name || '').split(' ').slice(1).join(' ') || '', company: $('Send Telegram Preview').first().json.company || '', jobtitle: $('Send Telegram Preview').first().json.position || '', outreach_status: 'rejected' } }] }) }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ inputs: [{ idProperty: 'email', id: $('Merge Enrichment').first().json.email, properties: { email: $('Merge Enrichment').first().json.email, firstname: ($('Merge Enrichment').first().json.name || '').split(' ')[0] || '', lastname: ($('Merge Enrichment').first().json.name || '').split(' ').slice(1).join(' ') || '', company: $('Merge Enrichment').first().json.company || '', jobtitle: $('Merge Enrichment').first().json.position || '', outreach_status: 'rejected' } }] }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -694,8 +718,11 @@
         "sendHeaders": false,
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ properties: { hs_timestamp: new Date().toISOString(), hs_note_body: 'Outreach rejected via HITL \u2014 ' + new Date().toISOString() }, associations: [{ to: { id: ($json.results?.[0]?.id || '') }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 202 }] }] }) }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ properties: { hs_timestamp: new Date().toISOString(), hs_note_body: 'Outreach rejected via HITL — ' + new Date().toISOString() }, associations: [{ to: { id: $json.results?.[0]?.id || '' }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 202 }] }] }) }}"
       },
       "credentials": {
         "httpHeaderAuth": {
@@ -1048,9 +1075,8 @@
     "executionOrder": "v1"
   },
   "staticData": null,
+  "pinData": {},
   "meta": {
-    "templateCredsSetupCompleted": false,
     "instanceId": ""
-  },
-  "pinData": {}
+  }
 }
