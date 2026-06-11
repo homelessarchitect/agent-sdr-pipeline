@@ -77,4 +77,4 @@ _All tasks in this phase require the workflow to be ACTIVATED — not run via "T
 
 - [ ] 6.1 Create `docs/architecture.md`. Include: sequence diagram (text/mermaid), node-by-node table (name, type, typeVersion, purpose), Wait/resume mechanics explanation, credential map. Verify: file renders in GitHub without errors.
 - [ ] 6.2 Update `README.md`: stack decisions (D1–D4 final), quickstart (clone → docker-compose up → import workflows → set credentials → activate → POST sample lead), prerequisites, Loom link placeholder.
-- [ ] 6.3 Record Loom walkthrough. Required shots: webhook POST visible, enrichment node output, Telegram notification with buttons, Approve tap on camera, email in inbox, Calendar event, HubSpot contact+deal. Duration: ≤ 5 min. Paste link in README.
+- [x] 6.3 Record Loom walkthrough. Required shots: webhook POST visible, enrichment node output, Telegram notification with buttons, Approve tap on camera, email in inbox, Calendar event, HubSpot contact+deal. Duration: ≤ 5 min. Paste link in README. _(Done 2026-06-11: https://www.loom.com/share/0c3c716d649d427d87434d7218cbd70f — pending paste into README via task 6.2.)_
